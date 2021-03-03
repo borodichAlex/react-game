@@ -46,6 +46,7 @@ const Backgammon = () => {
 
   return (
     <div className='root'>
+      <Board dataThrow={dataThrow} isGameStarted={isGameStarted}></Board>
       <button onClick={startGameHandler} disabled={isGameStarted} hidden={isGameStarted}>start game</button>
       <button onClick={endGameHandler} disabled={!isGameStarted} hidden={!isGameStarted}>end game</button>
       <button onClick={rollDiceHandler} disabled={!isGameStarted}>roll the dice</button>

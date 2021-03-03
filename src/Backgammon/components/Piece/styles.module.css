@@ -1,0 +1,22 @@
+.piece {
+  width: var(--size-piece);
+  height: var(--size-piece);
+
+  justify-self: right;
+  align-self: center;
+
+  background-color: var(--color-piece-white);
+
+  border-radius: 100%;
+
+  /* grid-column-start: 7;
+  grid-row-start: 15; */
+}
+
+.white {
+  background-color: var(--color-piece-white);
+}
+
+.black {
+  background-color: var(--color-piece-black);
+}
