@@ -96,61 +96,37 @@ const checkOccupiedField = (occupy: 1 | 2 | null, player: 1 | 2) => {
   return occupy === player;
 }
 
-const checkCanMovePieceOnBoard = (indexFrom: number, indexTo: number, player: 1 | 2) => {
-  const isBlackSideMove = indexTo <= 12 && indexTo >= minSizeField; // 11 - 1
-  const isWhiteSideMove = indexTo >= 13 && indexTo <= maxSizeField; // 14 - 24
-
-  if (player === 1) {
-    if (indexFrom <= 12 && indexFrom > indexTo && isBlackSideMove) {
-      return true;
-    }
-    if (indexFrom <= 12 && isWhiteSideMove) {
-      return true;
-    }
-    if (indexFrom >= 13 && indexFrom < indexTo && isWhiteSideMove) {
-      return true;
-    }
-  }
-
-  if (player === 2) {
-    if (indexFrom >= 13 && indexFrom < indexTo && isWhiteSideMove) {
-      return true;
-    }
-    if (indexFrom >= 13 && isBlackSideMove) {
-      return true;
-    }
-    if (indexFrom <= 12 && indexFrom > indexTo && isBlackSideMove) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-const checkDropPieceOnFieldByDataThrow = (dataThrow: {f: number, s: number}, indexFrom: number, indexTo: number, player: 1 | 2) => {
-  console.log('check');
+const checkCanMovePieceOnBoard = (dataThrow: {f: number, s: number}, indexFrom: number, indexTo: number, player: 1 | 2) => {
   const { f: firstNum, s: secondNum } = dataThrow;
   const sumNum = firstNum + secondNum;
 
   const isMoveWhiteSideWithoutLimit = indexFrom + firstNum === indexTo || indexFrom + secondNum === indexTo;
   const isMoveBlackSideWithoutLimit = indexFrom - firstNum === indexTo || indexFrom - secondNum === indexTo;
 
-  if (isMoveWhiteSideWithoutLimit || isMoveBlackSideWithoutLimit) {
-    console.log('can move without change side player - ' + player);
-    return true;
-  }
+  const isBlackSideMove = indexTo <= 12 && indexTo >= minSizeField; // 11 - 1
+  const isWhiteSideMove = indexTo >= 13 && indexTo <= maxSizeField; // 14 - 24
 
   if (player === 1) {
     const isRemainderFirst = indexFrom < firstNum;
     const isRemainderSecond = indexFrom < secondNum;
 
-    if (isRemainderFirst && (12 - (indexFrom - firstNum) === indexTo)) {
-      console.log('can move 1 player with change side');
-      return true;
+    const isChangeSideFirst = isRemainderFirst && (12 - (indexFrom - firstNum) === indexTo);
+    const isChangeSideSecond = isRemainderSecond && (12 - (indexFrom - secondNum) === indexTo);
+
+    if (indexFrom <= 12 && indexFrom > indexTo && isBlackSideMove) { // only black side
+      if (isMoveBlackSideWithoutLimit) {
+        return true;
+      }
     }
-    if (isRemainderSecond && (12 - (indexFrom - secondNum) === indexTo)) {
-      console.log('can move 1 player with change side');
-      return true;
+    if (indexFrom <= 12 && isWhiteSideMove) { // from black side to white side
+      if (isChangeSideFirst || isChangeSideSecond) {
+        return true;
+      }
+    }
+    if (indexFrom >= 13 && indexFrom < indexTo && isWhiteSideMove) { // only black side
+      if (isMoveWhiteSideWithoutLimit) {
+        return true;
+      }
     }
   }
 
@@ -158,13 +134,25 @@ const checkDropPieceOnFieldByDataThrow = (dataThrow: {f: number, s: number}, ind
     const isRemainderFirst = (indexFrom + firstNum) > 24;
     const isRemainderSecond = (indexFrom + secondNum) > 24;
 
-    if (isRemainderFirst && (12 - (indexFrom + firstNum - 24) === indexTo)) {
-      console.log('can move 2 player with change side');
-      return true;
+    const isChangeSideFirst = isRemainderFirst && (12 - (indexFrom + firstNum - 24) === indexTo);
+    const isChangeSideSecond = isRemainderSecond && (12 - (indexFrom + secondNum - 24) === indexTo);
+
+    if (indexFrom >= 13 && indexFrom < indexTo && isWhiteSideMove) { // only white side
+      if (isMoveWhiteSideWithoutLimit) {
+        return true;
+      }
     }
-    if (isRemainderSecond && (12 - (indexFrom + secondNum - 24) === indexTo)) {
-      console.log('can move 2 player with change side');
-      return true;
+
+    if (indexFrom >= 13 && isBlackSideMove) { // from white side to black side
+      if (isChangeSideFirst || isChangeSideSecond) {
+        return true;
+      }
+    }
+
+    if (indexFrom <= 12 && indexFrom > indexTo && isBlackSideMove) { // only black side
+      if (isMoveBlackSideWithoutLimit) {
+        return true;
+      }
     }
   }
 
@@ -197,11 +185,14 @@ const Board = (props: IBoardProps) => {
 
   const dragOverFieldHandler = (e: any, curField: IField) => {
     if (fromField && dragPiece) {
-      if (checkCanMovePieceOnBoard(fromField.id, curField.id, dragPiece.idPlayer)) {
-        if (checkOccupiedField(curField.occupy, dragPiece.idPlayer)) {
-          e.preventDefault();
-        }
+      const isCanMovePieceOnBoard = checkCanMovePieceOnBoard(dataThrow, fromField.id, curField.id, dragPiece.idPlayer);
+      const isOccupiedField = checkOccupiedField(curField.occupy, dragPiece.idPlayer);
+
+      if (isCanMovePieceOnBoard && isOccupiedField) {
+        e.preventDefault();
+        e.target.style.boxShadow = '#61992d 0px 0px 5px';
       }
+
     }
   }
 
@@ -210,12 +201,11 @@ const Board = (props: IBoardProps) => {
   }
 
   const dragEnterFieldHandler = (e: any, curField: IField) => {
-    // if (fromField && dragPiece) {
-    //   if (checkDropPieceOnFieldByDataThrow(dataThrow, fromField.id, curField.id, dragPiece?.idPlayer) && checkOccupiedField(curField.occupy, dragPiece?.idPlayer)) {
-    //     e.preventDefault();
-    //     e.target.style.boxShadow = '#61992d 0px 0px 5px';
-    //   }
-    // }
+    if (fromField && dragPiece) {
+      if (checkOccupiedField(curField.occupy, dragPiece?.idPlayer)) {
+        e.preventDefault();
+      }
+    }
   }
 
   const dropFieldHandler = (e: any, curField: IField) => {
