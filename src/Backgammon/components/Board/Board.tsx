@@ -170,6 +170,9 @@ const Board = (props: IBoardProps) => {
 
   const [board, setBoard] = useState<IField[]>(genBoard());
 
+  const [fromField, setFromField] = useState<null | IField>(null);
+  const [dragPiece, setDragPiece] = useState<null | IPiece>(null);
+
   useEffect(() => {
     if (isGameStarted) {
       setBoard(genBoard(startFieldsBoard));
@@ -187,15 +190,11 @@ const Board = (props: IBoardProps) => {
   // 2 player - black = can move 13 -> 24 and 12 -> 1
 
   const dragOverFieldHandler = (e: any, curField: IField) => {
-    const {field: fromField, piece}: {field: number, piece: IPiece} = JSON.parse(e.dataTransfer.getData("text/plain"));
-    const indexCurField = curField.id;
-    const indexFromField = fromField;
-
-    const {idPlayer} = piece;
-
-    if (checkCanMovePieceOnBoard(indexFromField, indexCurField, idPlayer)) {
-      if (checkOccupiedField(curField.occupy, piece.idPlayer)) {
-        e.preventDefault();
+    if (fromField && dragPiece) {
+      if (checkCanMovePieceOnBoard(fromField.id, curField.id, dragPiece.idPlayer)) {
+        if (checkOccupiedField(curField.occupy, dragPiece.idPlayer)) {
+          e.preventDefault();
+        }
       }
     }
   }
@@ -205,26 +204,16 @@ const Board = (props: IBoardProps) => {
   }
 
   const dragEnterFieldHandler = (e: any, curField: IField) => {
-    const {field: fromField, piece}: {field: number, piece: IPiece} = JSON.parse(e.dataTransfer.getData("text/plain"));
-
-    const indexCurField = curField.id;
-    const indexFromField = fromField;
-
-    const {idPlayer} = piece;
-
-    if (checkDropPieceOnFieldByDataThrow(dataThrow, indexFromField, indexCurField, idPlayer) && checkOccupiedField(curField.occupy, idPlayer)) {
-      e.preventDefault();
-      e.target.style.boxShadow = '#61992d 0px 0px 5px';
+    if (fromField && dragPiece) {
+      if (checkDropPieceOnFieldByDataThrow(dataThrow, fromField.id, curField.id, dragPiece?.idPlayer) && checkOccupiedField(curField.occupy, dragPiece?.idPlayer)) {
+        e.preventDefault();
+        e.target.style.boxShadow = '#61992d 0px 0px 5px';
+      }
     }
-
   }
 
   const dropFieldHandler = (e: any, curField: IField) => {
     e.preventDefault();
-
-    const data: {field: number, piece: IPiece} = JSON.parse(e.dataTransfer.getData("text/plain"));
-    const {field: fromField, piece} = data;
-
     const popPieceFromField = (field: IField, piece: IPiece) => {
       const pieces = [...field.pieces];
       pieces.pop();
@@ -239,32 +228,28 @@ const Board = (props: IBoardProps) => {
     }
 
     const insertPieceInField = (field: IField, piece: IPiece) => {
+      const newPiece = {...piece, field: field.id};
       const pieces = [...field.pieces];
 
-      piece.field = field.id;
-      pieces.push(piece);
+      pieces.push(newPiece);
       console.log({pieces});
 
-      const newField = {id: field.id, occupy: piece.idPlayer, pieces: pieces};
-
-      return newField;
+      return {occupy: newPiece.idPlayer, pieces: pieces};
     }
 
-    setBoard((board) => {
-      return board.map((field) => {
-        if (field.id === piece.field) {
-          return {...field, ...popPieceFromField(field, piece)};
-        } else if (field.id === curField.id) {
-          console.log({curField});
-          const ins = insertPieceInField(field, piece);
-          console.log({ins});
-
-          return {...ins};
-        } else {
-          return field;
+    if (dragPiece && fromField) {
+      setBoard(() => board.map((field) => {
+        if (fromField.id === field.id) {
+          const newFromField = {...fromField, ...popPieceFromField(fromField, dragPiece)};
+          return newFromField;
         }
-      })
-    });
+        if (curField.id === field.id) {
+          const newField = {...field, ...insertPieceInField(curField, dragPiece)}
+          return newField;
+        }
+        return field;
+      }));
+    }
 
     e.target.style.boxShadow = 'none';
   }
@@ -282,9 +267,10 @@ const Board = (props: IBoardProps) => {
       e.stopPropagation();
     }
 
+    setDragPiece(piece);
+    setFromField(field);
+
     e.dataTransfer.effectAllowed = 'move';
-    const dt = {field: field.id, piece};
-    e.dataTransfer.setData("text/plain", JSON.stringify(dt));
   }
 
   return (
