@@ -1,10 +1,12 @@
 .board {
   box-sizing: border-box;
 
+  grid-area: content;
+
   display: grid;
 
   grid-template:
-    repeat(2, calc(8 * var(--size-piece)))
+    repeat(2, calc(7 * var(--size-piece)))
     /
     repeat(6, var(--size-piece))
     calc(var(--size-piece) + var(--size-border-center))
@@ -27,7 +29,7 @@
   left: calc(6 * var(--size-piece));
 
   width: var(--size-border-center);
-  height: calc(100% + 1px);
+  height: calc(100% + 2px);
 
   background-color: var(--color-border);
 }
@@ -36,4 +38,6 @@
   box-sizing: border-box;
 
   display: flex;
+
+  align-items: flex-end;
 }
