@@ -97,23 +97,29 @@ const checkOccupiedField = (occupy: 1 | 2 | null, player: 1 | 2) => {
 }
 
 const checkCanMovePieceOnBoard = (indexFrom: number, indexTo: number, player: 1 | 2) => {
-  const isBlackSideMove = indexTo < 12 && indexTo >= minSizeField; // 11 - 1
-  const isWhiteSideMove = indexTo > 13 && indexTo <= maxSizeField; // 14 - 24
+  const isBlackSideMove = indexTo <= 12 && indexTo >= minSizeField; // 11 - 1
+  const isWhiteSideMove = indexTo >= 13 && indexTo <= maxSizeField; // 14 - 24
 
   if (player === 1) {
-    if (indexFrom <= 12 && (isBlackSideMove || isWhiteSideMove)) {
+    if (indexFrom <= 12 && indexFrom > indexTo && isBlackSideMove) {
       return true;
     }
-    if (indexFrom >= 13 && isWhiteSideMove) {
+    if (indexFrom <= 12 && isWhiteSideMove) {
+      return true;
+    }
+    if (indexFrom >= 13 && indexFrom < indexTo && isWhiteSideMove) {
       return true;
     }
   }
 
   if (player === 2) {
-    if (indexFrom >= 13 && (isWhiteSideMove || isBlackSideMove)) {
+    if (indexFrom >= 13 && indexFrom < indexTo && isWhiteSideMove) {
       return true;
     }
-    if (indexFrom <= 12 && isBlackSideMove) {
+    if (indexFrom >= 13 && isBlackSideMove) {
+      return true;
+    }
+    if (indexFrom <= 12 && indexFrom > indexTo && isBlackSideMove) {
       return true;
     }
   }
@@ -204,12 +210,12 @@ const Board = (props: IBoardProps) => {
   }
 
   const dragEnterFieldHandler = (e: any, curField: IField) => {
-    if (fromField && dragPiece) {
-      if (checkDropPieceOnFieldByDataThrow(dataThrow, fromField.id, curField.id, dragPiece?.idPlayer) && checkOccupiedField(curField.occupy, dragPiece?.idPlayer)) {
-        e.preventDefault();
-        e.target.style.boxShadow = '#61992d 0px 0px 5px';
-      }
-    }
+    // if (fromField && dragPiece) {
+    //   if (checkDropPieceOnFieldByDataThrow(dataThrow, fromField.id, curField.id, dragPiece?.idPlayer) && checkOccupiedField(curField.occupy, dragPiece?.idPlayer)) {
+    //     e.preventDefault();
+    //     e.target.style.boxShadow = '#61992d 0px 0px 5px';
+    //   }
+    // }
   }
 
   const dropFieldHandler = (e: any, curField: IField) => {
