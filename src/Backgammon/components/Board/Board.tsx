@@ -1,191 +1,57 @@
 import React, {useState, useEffect} from 'react';
+import { IDataThrow, ITurnPlayer, IField, IPiece, NumbersCube } from '../../types';
 import Piece from '../Piece/Piece';
+
+import {
+  dataStartFieldsBoard,
+  generateBoard,
+  checkOccupiedField,
+  checkCanMovePieceOnBoard,
+  getNumMovesPiece,
+} from './utils';
 
 import styles from './styles.module.css';
 
-// start left top triangle 1 - 24
-const maxSizeField = 24;
-const minSizeField = 1;
-
-type IPiece = {
-  readonly id: number;
-  readonly idPlayer: 1 | 2;
-  field: number,
-};
-
-interface IField {
-  readonly id: number,
-  occupy: 1 | 2 | null,
-  pieces: IPiece[],
-}
-
 interface IBoardProps {
-  isGameStarted: boolean,
-  dataThrow: {f: number, s: number}
-}
-
-const startFieldsBoard: IField[] = [
-  {
-    id: 12,
-    occupy: 1,
-    pieces: [
-      {id: 1, field: 12, idPlayer: 1},
-      {id: 2, field: 12, idPlayer: 1},
-      {id: 3, field: 12, idPlayer: 1},
-      {id: 4, field: 12, idPlayer: 1},
-      {id: 5, field: 12, idPlayer: 1},
-      {id: 6, field: 12, idPlayer: 1},
-      {id: 7, field: 12, idPlayer: 1},
-      {id: 8, field: 12, idPlayer: 1},
-      {id: 9, field: 12, idPlayer: 1},
-      {id: 10, field: 12, idPlayer: 1},
-      {id: 11, field: 12, idPlayer: 1},
-      {id: 12, field: 12, idPlayer: 1},
-      {id: 13, field: 12, idPlayer: 1},
-      {id: 14, field: 12, idPlayer: 1},
-      {id: 15, field: 12, idPlayer: 1},
-    ]
-  },
-  {
-    id: 13,
-    occupy: 2,
-    pieces: [
-      {id: 1, field: 13, idPlayer: 2},
-      {id: 2, field: 13, idPlayer: 2},
-      {id: 3, field: 13, idPlayer: 2},
-      {id: 4, field: 13, idPlayer: 2},
-      {id: 5, field: 13, idPlayer: 2},
-      {id: 6, field: 13, idPlayer: 2},
-      {id: 7, field: 13, idPlayer: 2},
-      {id: 8, field: 13, idPlayer: 2},
-      {id: 9, field: 13, idPlayer: 2},
-      {id: 10, field: 13, idPlayer: 2},
-      {id: 11, field: 13, idPlayer: 2},
-      {id: 12, field: 13, idPlayer: 2},
-      {id: 13, field: 13, idPlayer: 2},
-      {id: 14, field: 13, idPlayer: 2},
-      {id: 15, field: 13, idPlayer: 2},
-    ]
-  }
-];
-
-const genBoard = (arrFields?: IField[]): IField[] => {
-  const res = [];
-
-  for (let i = minSizeField; i <= maxSizeField; i++) {
-    if (arrFields) {
-      const indexField = arrFields.findIndex((field) => field.id === i);
-
-      if (indexField !== -1) {
-        res.push(arrFields[indexField]);
-      } else {
-        const field: IField = {id: i, occupy: null, pieces: []};
-        res.push(field);
-      }
-
-    } else {
-      const field: IField = {id: i, occupy: null, pieces: []};
-      res.push(field);
-    }
-  }
-  return res;
-}
-
-const checkOccupiedField = (occupy: 1 | 2 | null, player: 1 | 2) => {
-  if (!occupy) return true;
-  return occupy === player;
-}
-
-const checkCanMovePieceOnBoard = (dataThrow: {f: number, s: number}, indexFrom: number, indexTo: number, player: 1 | 2) => {
-  const { f: firstNum, s: secondNum } = dataThrow;
-  const sumNum = firstNum + secondNum;
-
-  const isMoveWhiteSideWithoutLimit = indexFrom + firstNum === indexTo || indexFrom + secondNum === indexTo;
-  const isMoveBlackSideWithoutLimit = indexFrom - firstNum === indexTo || indexFrom - secondNum === indexTo;
-
-  const isBlackSideMove = indexTo <= 12 && indexTo >= minSizeField; // 11 - 1
-  const isWhiteSideMove = indexTo >= 13 && indexTo <= maxSizeField; // 14 - 24
-
-  if (player === 1) {
-    const isRemainderFirst = indexFrom < firstNum;
-    const isRemainderSecond = indexFrom < secondNum;
-
-    const isChangeSideFirst = isRemainderFirst && (12 - (indexFrom - firstNum) === indexTo);
-    const isChangeSideSecond = isRemainderSecond && (12 - (indexFrom - secondNum) === indexTo);
-
-    if (indexFrom <= 12 && indexFrom > indexTo && isBlackSideMove) { // only black side
-      if (isMoveBlackSideWithoutLimit) {
-        return true;
-      }
-    }
-    if (indexFrom <= 12 && isWhiteSideMove) { // from black side to white side
-      if (isChangeSideFirst || isChangeSideSecond) {
-        return true;
-      }
-    }
-    if (indexFrom >= 13 && indexFrom < indexTo && isWhiteSideMove) { // only black side
-      if (isMoveWhiteSideWithoutLimit) {
-        return true;
-      }
-    }
-  }
-
-  if (player === 2) {
-    const isRemainderFirst = (indexFrom + firstNum) > 24;
-    const isRemainderSecond = (indexFrom + secondNum) > 24;
-
-    const isChangeSideFirst = isRemainderFirst && (12 - (indexFrom + firstNum - 24) === indexTo);
-    const isChangeSideSecond = isRemainderSecond && (12 - (indexFrom + secondNum - 24) === indexTo);
-
-    if (indexFrom >= 13 && indexFrom < indexTo && isWhiteSideMove) { // only white side
-      if (isMoveWhiteSideWithoutLimit) {
-        return true;
-      }
-    }
-
-    if (indexFrom >= 13 && isBlackSideMove) { // from white side to black side
-      if (isChangeSideFirst || isChangeSideSecond) {
-        return true;
-      }
-    }
-
-    if (indexFrom <= 12 && indexFrom > indexTo && isBlackSideMove) { // only black side
-      if (isMoveBlackSideWithoutLimit) {
-        return true;
-      }
-    }
-  }
-
-  return false;
+  isGameStarted: boolean;
+  dataThrow: IDataThrow | null;
+  turnPlayer: ITurnPlayer | null;
 }
 
 const Board = (props: IBoardProps) => {
-  const {dataThrow, isGameStarted} = props;
+  const {dataThrow, isGameStarted, turnPlayer} = props;
 
-  const [board, setBoard] = useState<IField[]>(genBoard());
+  const [board, setBoard] = useState<IField[]>(generateBoard(dataStartFieldsBoard));
 
   const [fromField, setFromField] = useState<null | IField>(null);
   const [dragPiece, setDragPiece] = useState<null | IPiece>(null);
+  const [dataTurn, setDataTurn] = useState<NumbersCube[]>([]);
+
+  useEffect(() => {
+    if (dataThrow) {
+      const {f, s} = dataThrow;
+      // const isDouble = s === f;
+      const arr =
+      // (isDouble) ? [s, f, s, f] :
+      [s, f];
+      setDataTurn(arr);
+    }
+  }, [dataThrow])
 
   useEffect(() => {
     if (isGameStarted) {
-      setBoard(genBoard(startFieldsBoard));
+      setBoard(generateBoard(dataStartFieldsBoard));
     } else {
-      setBoard(genBoard());
+      setBoard(generateBoard([]));
     }
   }, [isGameStarted])
-
-  useEffect(() => {
-    console.log('change board');
-    console.log({board});
-  }, [board])
 
   // 1 player - white = can move 12 -> 1 and 13 -> 24
   // 2 player - black = can move 13 -> 24 and 12 -> 1
 
   const dragOverFieldHandler = (e: any, curField: IField) => {
     if (fromField && dragPiece) {
-      const isCanMovePieceOnBoard = checkCanMovePieceOnBoard(dataThrow, fromField.id, curField.id, dragPiece.idPlayer);
+      const isCanMovePieceOnBoard = checkCanMovePieceOnBoard(dataTurn, fromField.id, curField.id, dragPiece.idPlayer);
       const isOccupiedField = checkOccupiedField(curField.occupy, dragPiece.idPlayer);
 
       if (isCanMovePieceOnBoard && isOccupiedField) {
@@ -245,34 +111,52 @@ const Board = (props: IBoardProps) => {
         }
         return field;
       }));
+
+      setDataTurn((data) => {
+        const numMoves = getNumMovesPiece(fromField.id, curField.id) as NumbersCube;
+
+        const index = data.indexOf(numMoves);
+
+        const newData = data.splice(index, 1);
+        return newData;
+      });
     }
 
     e.target.style.boxShadow = 'none';
   }
 
   const dragStartPieceHandler = (e: any, field: IField, piece: IPiece) => {
-    const lenPiecesField = field.pieces.length;
+    const isTurnPlayerDragPiece = piece.idPlayer === turnPlayer;
+    const isHaveTurns = dataTurn.length;
 
-    const indexLastPieceInField = lenPiecesField - 1;
+    if (isTurnPlayerDragPiece && isHaveTurns) {
+      const lenPiecesField = field.pieces.length;
+      const indexLastPieceInField = lenPiecesField - 1;
 
-    const isDragLastPiece = field.pieces[indexLastPieceInField].id === piece.id;
+      const isDragLastPiece = field.pieces[indexLastPieceInField].id === piece.id;
 
-    const isCanDragPiece = isDragLastPiece;
-    if (!isCanDragPiece) {
+      if (isDragLastPiece) {
+        e.target.style.cursor = 'grab';
+        setDragPiece(piece);
+        setFromField(field);
+
+        e.dataTransfer.effectAllowed = 'move';
+
+      } else {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    } else {
       e.preventDefault();
       e.stopPropagation();
     }
 
-    setDragPiece(piece);
-    setFromField(field);
-
-    e.dataTransfer.effectAllowed = 'move';
   }
 
   return (
     <div className={`${styles.board}`} >
       {
-         board.map((field) => {
+        board.map((field) => {
           const directionField = (field.id > 12) ? 'column-reverse' : 'column';
           return <div
             key={field.id}
