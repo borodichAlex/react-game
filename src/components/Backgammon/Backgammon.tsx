@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import Board from './components/Board/Board';
 import ControlPanel from './components/ControlPanel/ControlPanel';
 
@@ -13,6 +13,9 @@ const Backgammon = () => {
   const [dataThrow, setDataThrow] = useState<IDataThrow | null>(null);
   const [turnPlayer, setTurnPlayer] = useState<ITurnPlayer | null>(null);
   const [isEndTurn, setIsEndTurn] = useState(true);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+
+  const refRoot = useRef<HTMLDivElement>(null);
 
   const handleStartGame = () => {
     setGameStarted(true);
@@ -31,6 +34,17 @@ const Backgammon = () => {
     setTurnPlayer(player);
   }
 
+  const handleToggleFullScreen = () => {
+    if (refRoot.current) {
+      if (isFullScreen) {
+        document.exitFullscreen();
+      } else {
+        refRoot.current.requestFullscreen();
+      }
+    }
+    setIsFullScreen((state) => !state);
+  }
+
   const handleRollTheDice = () => {
     setDataThrow(getDataThrow());
     setIsEndTurn(false);
@@ -41,9 +55,14 @@ const Backgammon = () => {
     changePlayer();
   }
 
+  const titleStyles = {
+    gridArea: 'header',
+    color: (isFullScreen) ? 'white' : 'black',
+  }
+
   return (
-    <div className='backgammon'>
-      <h1 style={{gridArea: 'header'}}>Backgammon</h1>
+    <div className='backgammon' ref={refRoot}>
+      <h1 style={titleStyles}>Backgammon</h1>
       <Board
         dataThrow={dataThrow}
         isGameStarted={isGameStarted}
@@ -54,7 +73,8 @@ const Backgammon = () => {
         onEndGameClick={handleEndGame}
         onRollTheDiceClick={handleRollTheDice}
         onEndTurnClick={handleEndTurn}
-        {...{isGameStarted, isEndTurn, turnPlayer, dataThrow}}
+        onFullScreenClick={handleToggleFullScreen}
+        {...{isGameStarted, isEndTurn, turnPlayer, dataThrow, isFullScreen}}
       />
     </div>
   )

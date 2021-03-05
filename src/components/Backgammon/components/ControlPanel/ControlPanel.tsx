@@ -8,15 +8,18 @@ interface IProps {
   onRollTheDiceClick: () => void;
   isEndTurn: boolean;
   onEndTurnClick: () => void;
+  onFullScreenClick: () => void;
+  isFullScreen: boolean;
   turnPlayer: ITurnPlayer | null;
   dataThrow: IDataThrow | null;
 }
 
 const ControlPanel = (props: IProps) => {
-  const {isGameStarted, onStartGameClick, onEndGameClick, onRollTheDiceClick, isEndTurn, onEndTurnClick, turnPlayer, dataThrow} = props;
+  const {isGameStarted, onStartGameClick, onEndGameClick, onRollTheDiceClick, isEndTurn, onEndTurnClick, onFullScreenClick, turnPlayer, dataThrow, isFullScreen} = props;
 
   return (
     <div style={{gridArea: 'sidebar'}}>
+      <button onClick={onFullScreenClick}>{isFullScreen ? 'Exit' : 'Open'} Full Screen</button>
       {
         !isGameStarted ?
           <button
