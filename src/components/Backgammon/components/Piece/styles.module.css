@@ -1,0 +1,16 @@
+.piece {
+  width: var(--size-piece);
+  height: var(--size-piece);
+
+  background-color: var(--color-piece-white);
+
+  border-radius: 100%;
+}
+
+.white {
+  background-color: var(--color-piece-white);
+}
+
+.black {
+  background-color: var(--color-piece-black);
+}

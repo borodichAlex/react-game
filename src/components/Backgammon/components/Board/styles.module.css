@@ -1,0 +1,43 @@
+.board {
+  box-sizing: border-box;
+
+  grid-area: content;
+
+  display: grid;
+
+  grid-template:
+    repeat(2, calc(7 * var(--size-piece)))
+    /
+    repeat(6, var(--size-piece))
+    calc(var(--size-piece) + var(--size-border-center))
+    repeat(5, var(--size-piece));
+  ;
+
+  position: relative;
+
+  background-color: var(--bg-board);
+
+  border: var(--size-border) solid var(--color-border);
+}
+
+.board::after {
+  content: '';
+  box-sizing: border-box;
+
+  position: absolute;
+  top: -1px;
+  left: calc(6 * var(--size-piece));
+
+  width: var(--size-border-center);
+  height: calc(100% + 2px);
+
+  background-color: var(--color-border);
+}
+
+.field {
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: flex-end;
+}
